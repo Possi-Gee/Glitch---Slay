@@ -181,8 +181,8 @@ export function ProductReviews({ product }: ProductReviewsProps) {
 
       // Sort client-side to avoid requiring a Firestore composite index
       fetchedReviews.sort((a, b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+        const dateA = (a.createdAt as any)?.toDate ? (a.createdAt as any).toDate() : new Date(a.createdAt);
+        const dateB = (b.createdAt as any)?.toDate ? (b.createdAt as any).toDate() : new Date(b.createdAt);
         return dateB.getTime() - dateA.getTime();
       });
 

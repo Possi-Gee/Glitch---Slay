@@ -46,8 +46,8 @@ export const getOrderStatusTool = async (userId?: string) => ai.defineTool(
 
       // Sort client-side by date and take the 3 most recent
       orders.sort((a, b) => {
-        const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
-        const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+        const dateA = (a.date as any)?.toDate ? (a.date as any).toDate() : new Date(a.date);
+        const dateB = (b.date as any)?.toDate ? (b.date as any).toDate() : new Date(b.date);
         return dateB.getTime() - dateA.getTime();
       });
       const recentOrders = orders.slice(0, 3);
