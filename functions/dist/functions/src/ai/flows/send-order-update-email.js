@@ -1,0 +1,264 @@
+"use strict";
+// @ts-nocheck
+'use server';
+// @ts-nocheck
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendOrderUpdateEmail = sendOrderUpdateEmail;
+/**
+ * @fileOverview A Genkit flow for sending order update and password reset emails.
+ *
+ * - sendOrderUpdateEmail - A function that sends an email notification.
+ * - SendOrderUpdateEmailInput - The input type for the sendOrderUpdateEmail function.
+ * - SendOrderUpdateEmailOutput - The return type for the sendOrderUpdateEmail function.
+ */
+const genkit_1 = require("@/ai/genkit");
+const zod_1 = require("zod");
+const nodemailer_1 = __importDefault(require("nodemailer"));
+const firebase_admin_1 = __importDefault(require("firebase-admin"));
+// Initialize Firebase Admin SDK if not already initialized
+if (!firebase_admin_1.default.apps.length) {
+    firebase_admin_1.default.initializeApp();
+}
+const CartItemSchema = zod_1.z.object({
+    id: zod_1.z.string(),
+    productId: zod_1.z.string(),
+    name: zod_1.z.string(),
+    image: zod_1.z.string().url(),
+    quantity: zod_1.z.number(),
+    variant: zod_1.z.object({
+        id: zod_1.z.string(),
+        name: zod_1.z.string(),
+        price: zod_1.z.number(),
+        originalPrice: zod_1.z.number().optional(),
+        stock: zod_1.z.number(),
+    })
+});
+const SendOrderUpdateEmailInputSchema = zod_1.z.object({
+    status: zod_1.z.string().describe('The purpose of the email (e.g., "Confirmed", "Shipped", "Password Reset").'),
+    recipientEmail: zod_1.z.string().email().describe('The email address of the recipient.'),
+    customerName: zod_1.z.string().describe('The name of the customer.'),
+    appName: zod_1.z.string().describe('The name of the application.'),
+    orderId: zod_1.z.string().optional().describe('The ID of the order.'),
+    deliveryMethod: zod_1.z.string().optional().describe('The delivery method for the order (e.g., "pickup", "delivery").'),
+    paymentMethod: zod_1.z.string().optional().describe('The payment method for the order (e.g., "on_delivery").'),
+    total: zod_1.z.number().optional().describe('The total amount of the order.'),
+    items: zod_1.z.array(CartItemSchema).optional().describe('The items in the order.'),
+});
+const SendOrderUpdateEmailOutputSchema = zod_1.z.object({
+    success: zod_1.z.boolean().describe('Whether the email was sent successfully.'),
+    message: zod_1.z.string().describe('A message indicating the result of the operation.'),
+});
+const getEmailContent = (status, customerName, appName, recipient, input, resetLink) => {
+    const { orderId, deliveryMethod, paymentMethod, total, items } = input;
+    let subject = `Update on your ${appName} Order`;
+    let mainContent = `<p>Hi ${customerName},</p><p>There's an update on your order. The new status is: <strong>${status}</strong>.</p>`;
+    const isPickup = deliveryMethod === 'pickup';
+    const itemsHtml = items && items.length > 0 ? `
+      <h3>Order Summary</h3>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        ${items.map(item => {
+        const imageSrc = item.image.includes('picsum.photos')
+            ? `https://placehold.co/64x64/EFEFEF/333333?text=${item.name.charAt(0)}`
+            : item.image;
+        return `
+          <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 10px 0;"><img src="${imageSrc}" alt="${item.name}" width="64" height="64" style="border-radius: 4px; object-fit: cover;"/></td>
+            <td style="padding: 10px; vertical-align: top;">
+              ${item.name} (${item.variant.name})<br>
+              <span style="color: #888;">Qty: ${item.quantity}</span>
+            </td>
+            <td style="padding: 10px; text-align: right; vertical-align: top;">GH₵${(item.variant.price * item.quantity).toFixed(2)}</td>
+          </tr>
+        `;
+    }).join('')}
+      </table>
+      <p style="text-align: right; font-size: 1.2em; font-weight: bold;">Total: GH₵${total === null || total === void 0 ? void 0 : total.toFixed(2)}</p>
+    ` : '';
+    switch (status.toLowerCase()) {
+        case 'password reset':
+            subject = `Reset Your Password for ${appName}`;
+            mainContent = `
+                <h2>Password Reset Request</h2>
+                <p>Hi ${customerName},</p>
+                <p>We received a request to reset your password. Click the button below to choose a new one. This link will expire in 1 hour.</p>
+                <p>If you did not request this, you can safely ignore this email.</p>
+            `;
+            break;
+        case 'confirmed':
+            subject = `✅ Your ${appName} Order Confirmation #${orderId}`;
+            mainContent = `
+                <h2>Thanks for your order, ${customerName}!</h2>
+                <p>We've received your order #${orderId} and are getting it ready. We'll notify you as soon as it's ready for pickup or has shipped.</p>
+             `;
+            if (isPickup && paymentMethod === 'on_delivery' && total) {
+                mainContent += `<p><b>Please remember to bring GH₵${total.toFixed(2)} when you come to pick up your order.</b></p>`;
+            }
+            break;
+        case 'new order': // For Admin
+            subject = `🎉 New Order Received! #${orderId}`;
+            mainContent = `
+                <h2>You've received a new order!</h2>
+                <p>A new order (#${orderId}) was placed by ${customerName}.</p>
+                <p>Please review it in the admin dashboard to begin processing.</p>
+            `;
+            break;
+        case 'shipped':
+            if (isPickup) {
+                subject = `✅ Your ${appName} Order #${orderId} is Ready for Pickup!`;
+                mainContent = `
+                    <h2>Great News, ${customerName}!</h2>
+                    <p>Your order #${orderId} is now ready for you to pick up at our store.</p>
+                 `;
+                if (paymentMethod === 'on_delivery' && total) {
+                    mainContent += `<p><b>Please remember to bring GH₵${total.toFixed(2)} to complete your payment.</b></p>`;
+                }
+                mainContent += `<p>We look forward to seeing you!</p>`;
+            }
+            else {
+                subject = `🚀 Your ${appName} Order #${orderId} Has Shipped!`;
+                mainContent = `
+                    <h2>Great News, ${customerName}!</h2>
+                    <p>Your order #${orderId} is on its way to you.</p>
+                    <p>We're so excited for you to receive your items!</p>
+                `;
+            }
+            break;
+        case 'delivered':
+            subject = `✅ Your ${appName} Order #${orderId} Has Been Delivered!`;
+            mainContent = `
+                <h2>Hooray, ${customerName}!</h2>
+                <p>Your order #${orderId} has arrived. We hope you enjoy your new items!</p>
+                <p>Thank you for shopping with us.</p>
+            `;
+            break;
+        case 'cancelled':
+            subject = `Your ${appName} Order #${orderId} Has Been Cancelled`;
+            mainContent = `
+                <h2>Order Cancellation</h2>
+                <p>Hi ${customerName}, as requested, your order #${orderId} has been cancelled.</p>
+                <p>If you have any questions, please feel free to contact our support team.</p>
+            `;
+            break;
+    }
+    const finalHtml = status.toLowerCase() !== 'password reset' ? `${mainContent}${itemsHtml}` : mainContent;
+    return { subject, html: styleEmail(finalHtml, appName, orderId, recipient, status, resetLink) };
+};
+const styleEmail = (content, appName, orderId, recipient, status, resetLink) => {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:9002');
+    let buttonUrl;
+    let buttonText;
+    if (status.toLowerCase() === 'password reset' && resetLink) {
+        buttonUrl = resetLink;
+        buttonText = 'Reset Your Password';
+    }
+    else if (recipient === 'admin' && orderId) {
+        buttonUrl = `${baseUrl}/admin/orders/${orderId}`;
+        buttonText = 'View in Admin Panel';
+    }
+    else if (orderId) {
+        buttonUrl = `${baseUrl}/orders/${orderId}`;
+        buttonText = 'View Order in Store';
+    }
+    const showButton = buttonUrl && buttonText;
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <style>
+              body { font-family: Arial, sans-serif; color: #333; line-height: 1.6; margin: 0; padding: 20px; background-color: #f4f4f4; }
+              .container { max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background-color: #fff; }
+              .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+              .header h1 { color: #1a1a1a; font-size: 24px; margin: 0;}
+              .content { padding: 20px 0; }
+              .button-container { text-align: center; margin-top: 20px; margin-bottom: 20px; }
+              .button { background-color: #1976d2; color: #ffffff !important; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; }
+              .footer { text-align: center; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888; }
+              h2 { color: #1a1a1a; }
+              h3 { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 30px; }
+              p { margin-bottom: 1em; }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <div class="header">
+                  <h1>${appName}</h1>
+              </div>
+              <div class="content">
+                ${content}
+                ${showButton ? `<div class="button-container"><a href="${buttonUrl}" class="button">${buttonText}</a></div>` : ''}
+              </div>
+              <div class="footer">
+                  <p>Thank you for choosing ${appName}!</p>
+              </div>
+          </div>
+      </body>
+      </html>
+    `;
+};
+async function sendOrderUpdateEmail(input) {
+    return sendOrderUpdateEmailFlow(input);
+}
+const sendOrderUpdateEmailFlow = genkit_1.ai.defineFlow({
+    name: 'sendOrderUpdateEmailFlow',
+    inputSchema: SendOrderUpdateEmailInputSchema,
+    outputSchema: SendOrderUpdateEmailOutputSchema,
+}, async (input) => {
+    const { status, recipientEmail, customerName, appName } = input;
+    const { EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL, NEXT_PUBLIC_APP_URL, } = process.env;
+    if (!EMAIL_HOST || !EMAIL_PORT || !EMAIL_USER || !EMAIL_PASS) {
+        const errorMessage = 'Email service is not configured. Please set required EMAIL environment variables.';
+        console.error(errorMessage);
+        return { success: false, message: errorMessage };
+    }
+    let resetLink = undefined;
+    if (status.toLowerCase() === 'password reset') {
+        try {
+            const actionCodeSettings = {
+                url: `${NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/login`,
+                handleCodeInApp: true,
+            };
+            resetLink = await firebase_admin_1.default.auth().generatePasswordResetLink(recipientEmail, actionCodeSettings);
+        }
+        catch (error) {
+            console.error('Failed to generate password reset link:', error);
+            if (error.code === 'auth/user-not-found') {
+                return { success: true, message: 'If an account exists for this email, a reset link has been sent.' };
+            }
+            return { success: false, message: `Failed to generate reset link: ${error.message}` };
+        }
+    }
+    const transporter = nodemailer_1.default.createTransport({
+        host: EMAIL_HOST,
+        port: parseInt(EMAIL_PORT, 10),
+        secure: parseInt(EMAIL_PORT, 10) === 465,
+        auth: {
+            user: EMAIL_USER,
+            pass: EMAIL_PASS,
+        },
+    });
+    const recipientType = recipientEmail === ADMIN_EMAIL ? 'admin' : 'customer';
+    const { subject, html } = getEmailContent(status, customerName, appName, recipientType, input, resetLink);
+    const fromAddress = `"${appName}" <${EMAIL_USER}>`;
+    const mailOptions = {
+        from: fromAddress,
+        to: recipientEmail,
+        subject: subject,
+        html: html,
+    };
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Email sent successfully to ${recipientEmail}`);
+        const successMessage = status.toLowerCase() === 'password reset'
+            ? 'If an account exists for this email, a reset link has been sent.'
+            : `Update email sent to ${recipientEmail}.`;
+        return { success: true, message: successMessage };
+    }
+    catch (error) {
+        console.error('Failed to send email:', error);
+        return { success: false, message: `Failed to send email: ${error.message}` };
+    }
+});
+//# sourceMappingURL=send-order-update-email.js.map

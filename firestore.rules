@@ -1,0 +1,92 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      let superAdmins = ["possigee96@gmail.com"];
+      let isSuperAdmin = request.auth != null && request.auth.token.email in superAdmins;
+      let adminDocPath = /databases/$(database)/documents/admins/$(request.auth.uid);
+      let adminDocExists = request.auth != null && exists(adminDocPath);
+      let adminData = adminDocExists ? get(adminDocPath).data : {};
+      let role = adminData.get('role', '');
+      let expiry = adminData.get('expiresAt', null);
+      let hasValidRole = role == 'admin' || role == 'superadmin';
+      let isNotExpired = expiry == null || expiry > request.time;
+      return isSuperAdmin || (adminDocExists && hasValidRole && isNotExpired);
+    }
+
+    // Site settings can be read by anyone, but only written by admins.
+    match /site/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Products can be read by anyone.
+    // Only admins can create/delete products.
+    // Any authenticated user can update rating/reviews (for review submissions).
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (
+        request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'reviews'])
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Orders can be created by authenticated users for themselves.
+    // Orders can be read/updated by the owner, any admin, or a vendor whose UID is in vendorIds.
+    match /orders/{orderId} {
+      allow read, update: if isOwner(resource.data.userId) || isAdmin() || (request.auth != null && resource.data.vendorIds.hasAny([request.auth.uid]));
+      allow create: if isOwner(request.resource.data.userId);
+      allow delete: if isAdmin(); // Only admins can delete orders
+    }
+
+    // Coupons can only be managed by admins.
+    match /coupons/{couponId} {
+      allow read: if isAdmin();
+      allow write, create, delete: if isAdmin();
+    }
+
+    // Reviews can be read by anyone, created by any authenticated user.
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // Newsletter subscribers: anyone can subscribe, only admins can read/manage.
+    match /newsletter_subscribers/{subId} {
+      allow create: if true;
+      allow read, write, delete: if isAdmin();
+    }
+
+    // Admins collection can only be read by admins themselves to check status.
+    // Only superadmins should be able to write/create/delete other admins,
+    // but for simplicity and security, we manage this directly in the Firebase Console.
+    match /admins/{adminId} {
+        allow read: if isOwner(adminId) || isAdmin();
+        allow write, create, delete: if false; // Prevent modification from client-side
+    }
+
+    // Vendors can be read by anyone (for displaying verified badges on products).
+    // Only admins can write/create/delete vendor records.
+    match /vendors/{vendorId} {
+        allow read: if true;
+        allow write, create, delete: if isAdmin();
+    }
+
+    // Blog posts can be read by anyone, managed by admins.
+    match /blog_posts/{postId} {
+        allow read: if true;
+        allow write, create, delete: if isAdmin();
+    }
+  }
+}
