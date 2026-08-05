@@ -144,11 +144,6 @@ function AdminLayoutContent({ children, adminRole }: { children: React.ReactNode
       icon: ShoppingCart,
     },
     {
-      href: '/vendor/orders',
-      label: 'Vendor Orders',
-      icon: Printer,
-    },
-    {
       href: '/admin/products',
       label: 'Products',
       icon: Package,

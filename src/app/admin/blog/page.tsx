@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,9 +14,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Plus, Trash2, Loader2 } from 'lucide-react';
+import { FileText, Plus, Trash2, Loader2, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { errorEmitter } from '@/lib/firebase/error-emitter';
 import { FirestorePermissionError } from '@/lib/firebase/errors';
+import Image from 'next/image';
 
 type BlogPost = {
   id: string;
@@ -25,6 +26,7 @@ type BlogPost = {
   excerpt: string;
   content: string;
   author: string;
+  coverImage?: string;
   publishedAt: string;
   createdAt: string;
 };
@@ -46,6 +48,9 @@ export default function AdminBlogPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [coverImage, setCoverImage] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const form = useForm<PostForm>({ resolver: zodResolver(postSchema), defaultValues: { title: '', slug: '', excerpt: '', content: '', author: 'Admin' } });
@@ -64,14 +69,44 @@ export default function AdminBlogPage() {
     return () => unsub();
   }, []);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const base64 = reader.result as string;
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64 }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Upload failed');
+        setCoverImage(data.url);
+        toast({ title: 'Image uploaded', description: 'Cover image ready.' });
+      } catch (err: any) {
+        toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+      } finally {
+        setUploadingImage(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const openCreate = () => {
     setEditingId(null);
+    setCoverImage('');
     form.reset({ title: '', slug: '', excerpt: '', content: '', author: 'Admin' });
     setDialogOpen(true);
   };
 
   const openEdit = (post: BlogPost) => {
     setEditingId(post.id);
+    setCoverImage(post.coverImage || '');
     form.reset({ title: post.title, slug: post.slug, excerpt: post.excerpt, content: post.content, author: post.author });
     setDialogOpen(true);
   };
@@ -80,11 +115,15 @@ export default function AdminBlogPage() {
     setSaving(true);
     try {
       const postId = editingId || doc(collection(db, 'blog_posts')).id;
-      await setDoc(doc(db, 'blog_posts', postId), {
+      const postData: Record<string, any> = {
         ...data,
-        publishedAt: editingId ? undefined : new Date().toISOString(),
-        createdAt: editingId ? undefined : new Date().toISOString(),
-      });
+        ...(coverImage ? { coverImage } : {}),
+      };
+      if (!editingId) {
+        postData.publishedAt = new Date().toISOString();
+        postData.createdAt = new Date().toISOString();
+      }
+      await setDoc(doc(db, 'blog_posts', postId), postData, { merge: true });
       toast({ title: editingId ? 'Post updated' : 'Post created' });
       setDialogOpen(false);
     } catch {
@@ -123,11 +162,20 @@ export default function AdminBlogPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow><TableHead>Title</TableHead><TableHead>Slug</TableHead><TableHead>Author</TableHead><TableHead>Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+              <TableRow><TableHead>Cover</TableHead><TableHead>Title</TableHead><TableHead>Slug</TableHead><TableHead>Author</TableHead><TableHead>Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
             </TableHeader>
             <TableBody>
               {posts.map(post => (
                 <TableRow key={post.id}>
+                  <TableCell>
+                    {post.coverImage ? (
+                      <Image src={post.coverImage} alt={post.title} width={48} height={48} className="rounded object-cover w-12 h-12" />
+                    ) : (
+                      <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">{post.title}</TableCell>
                   <TableCell className="text-muted-foreground">/{post.slug}</TableCell>
                   <TableCell>{post.author}</TableCell>
@@ -139,7 +187,7 @@ export default function AdminBlogPage() {
                 </TableRow>
               ))}
               {posts.length === 0 && !loading && (
-                <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No posts yet.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No posts yet.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -147,7 +195,7 @@ export default function AdminBlogPage() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingId ? 'Edit Post' : 'New Post'}</DialogTitle></DialogHeader>
           <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
             <div>
@@ -164,6 +212,46 @@ export default function AdminBlogPage() {
               <Label>Author</Label>
               <Input {...form.register('author')} />
             </div>
+
+            {/* Cover Image Upload */}
+            <div className="space-y-2">
+              <Label>Cover Image</Label>
+              {coverImage ? (
+                <div className="relative w-full rounded-md overflow-hidden border aspect-video bg-muted">
+                  <Image src={coverImage} alt="Cover preview" fill className="object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setCoverImage('')}
+                    className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black/80"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className="border-2 border-dashed border-border rounded-md p-6 text-center cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {uploadingImage ? (
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                  ) : (
+                    <>
+                      <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">Click to upload a cover image</p>
+                      <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WEBP supported</p>
+                    </>
+                  )}
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
+            </div>
+
             <div>
               <Label>Excerpt</Label>
               <Textarea {...form.register('excerpt')} rows={2} placeholder="Short summary" />
@@ -175,7 +263,10 @@ export default function AdminBlogPage() {
               {form.formState.errors.content && <p className="text-xs text-destructive mt-1">{form.formState.errors.content.message}</p>}
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{editingId ? 'Update' : 'Create'}</Button>
+              <Button type="submit" disabled={saving || uploadingImage}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {editingId ? 'Update' : 'Create'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -194,3 +285,6 @@ export default function AdminBlogPage() {
     </div>
   );
 }
+
+
+

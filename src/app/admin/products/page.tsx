@@ -259,7 +259,7 @@ export default function AdminProductsPage() {
     const finalProduct: Product = {
       id: editingProduct?.id || generateUniqueId(),
       ...productData,
-      vendor: selectedVendor ? { vendorId: selectedVendor.uid, storeName: selectedVendor.storeName, verified: selectedVendor.verified } : undefined,
+      ...(selectedVendor ? { vendor: { vendorId: selectedVendor.uid, storeName: selectedVendor.storeName, verified: selectedVendor.verified } } : {}),
       dataAiHint: `${data.category.toLowerCase()} product`
     };
 
@@ -544,12 +544,15 @@ export default function AdminProductsPage() {
                                name="vendorId"
                                control={control}
                                render={({ field }) => (
-                                   <Select onValueChange={field.onChange} value={field.value || ''}>
+                                   <Select 
+                                        onValueChange={(val) => field.onChange(val === 'none' ? '' : val)} 
+                                        value={field.value || 'none'}
+                                    >
                                        <SelectTrigger id="vendorId">
                                            <SelectValue placeholder="No vendor (store default)" />
                                        </SelectTrigger>
                                        <SelectContent>
-                                           <SelectItem value="">No vendor (store default)</SelectItem>
+                                           <SelectItem value="none">No vendor (store default)</SelectItem>
                                            {vendors.map((v) => (
                                                <SelectItem key={v.uid} value={v.uid}>
                                                    {v.storeName} {v.verified ? '✓' : ''}

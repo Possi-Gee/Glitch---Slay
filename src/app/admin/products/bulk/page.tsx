@@ -39,7 +39,7 @@ export default function BulkStockPage() {
     let successCount = 0;
     for (const [key, data] of Object.entries(updates)) {
       const [productId, variantId] = key.split('_');
-      if (data.stock !== undefined) {
+      if (data.stock !== undefined || data.price !== undefined) {
         try {
           const productRef = doc(db, 'products', productId);
           const product = products.find(p => p.id === productId);
