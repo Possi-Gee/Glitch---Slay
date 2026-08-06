@@ -115,9 +115,26 @@ export default function AdminOrderDetailPage() {
     }
   };
   
-    const handleBookDelivery = () => {
-        window.open('https://delivery.yango.com/', '_blank', 'noopener,noreferrer');
-    };
+  const handleUpdateAdminLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: 'Geolocation not supported', variant: 'destructive' });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+      const orderRef = doc(db, 'orders', order.id.toString());
+      await updateDoc(orderRef, { adminLocation: { lat: latitude, lng: longitude } });
+      toast({ title: 'Location Updated', description: 'Your current location saved to order.' });
+    }, (error) => {
+      console.error(error);
+      toast({ title: 'Failed to get location', variant: 'destructive' });
+    });
+  };
+
+  const handleBookDelivery = () => {
+    window.open('https://delivery.yango.com/', '_blank', 'noopener,noreferrer');
+  };
+
 
   if (!order) {
     return (
@@ -138,6 +155,9 @@ export default function AdminOrderDetailPage() {
             <ArrowLeft className="mr-2" /> Back to Orders
         </Button>
         <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleUpdateAdminLocation}>
+                Update My Location
+            </Button>
             <Button asChild variant="outline">
                 <Link href={`/admin/orders/${order.id}/packing-slip`}>
                     <FileText className="mr-2 h-4 w-4" />
@@ -321,10 +341,43 @@ export default function AdminOrderDetailPage() {
                      <p className="text-muted-foreground">Method: {getPaymentMethodName(order.paymentMethod)}</p>
                      <Separator className="my-4" />
                       <h4 className="font-semibold">Delivery Method</h4>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        {order.deliveryMethod === 'delivery' ? <Truck className="h-5 w-5" /> : <Store className="h-5 w-5" />}
-                        <span>{getDeliveryMethodName(order.deliveryMethod)}</span>
-                     </div>
+import { MapLinkButton } from '@/components/map-link-button';
+import { useParams, useRouter } from 'next/navigation';
+import { useOrders } from '@/hooks/use-orders';
+import type { Order, OrderStatus } from '@/context/order-context';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
+import { ArrowLeft, Package, Truck, User, MoreVertical, Store, MessageSquare, Bike, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useMemo, useState } from 'react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Loader2 } from 'lucide-react';
+import { useSiteSettings } from '@/hooks/use-site-settings';
+import { sendOrderUpdateEmail } from '@/ai/flows/send-order-update-email';
+import { errorEmitter } from '@/lib/firebase/error-emitter';
+import { FirestorePermissionError } from '@/lib/firebase/errors';
+import Link from 'next/link';
+
+// ... 
+
+// Inside AdminOrderDetailPage component, near the Customer Details Card
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            {order.deliveryMethod === 'delivery' ? <Truck className="h-5 w-5" /> : <Store className="h-5 w-5" />}
+                            <span>{getDeliveryMethodName(order.deliveryMethod)}</span>
+                        </div>
+                        {order.deliveryCoords && (
+                            <div className="mt-4">
+                                <p className="text-sm font-medium mb-1">Customer Location:</p>
+                                <MapLinkButton lat={order.deliveryCoords.lat} lng={order.deliveryCoords.lng} />
+                            </div>
+                        )}
+
 
                 </CardContent>
             </Card>
