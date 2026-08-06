@@ -22,4 +22,3 @@ export function MapLinkButton({ lat, lng, label = 'Open in Google Maps' }: MapLi
     </Button>
   );
 }
-", filePath="C:/Users/HP/Downloads/Girly-Website/Glitch---Slay/src/components/map-link-button.tsx")
