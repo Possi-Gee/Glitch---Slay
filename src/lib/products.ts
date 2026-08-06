@@ -28,6 +28,16 @@ export type Product = {
   variants: ProductVariant[];
   features?: string;
   price?: number;
+  // Pre-Order Fields
+  isPreOrder?: boolean;
+  releaseDate?: string; // Using string as dates from firestore are often serialized
+  shippingDate?: string;
+  preOrderLimit?: number;
+  depositEnabled?: boolean;
+  depositAmount?: number;
+  expectedDelivery?: string;
+  allowCancellation?: boolean;
+  preOrderMessage?: string;
 };
 
 export const products: Product[] = [

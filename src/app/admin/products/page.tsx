@@ -88,6 +88,15 @@ const productSchema = z.object({
   isOfficialStore: z.boolean().default(false),
   vendorId: z.string().optional(),
   variants: z.array(variantSchema).min(1, 'At least one product variant is required.'),
+  isPreOrder: z.boolean().default(false),
+  releaseDate: z.string().optional(),
+  shippingDate: z.string().optional(),
+  preOrderLimit: z.coerce.number().optional(),
+  depositEnabled: z.boolean().default(false),
+  depositAmount: z.coerce.number().optional(),
+  expectedDelivery: z.string().optional(),
+  allowCancellation: z.boolean().default(true),
+  preOrderMessage: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -496,17 +505,60 @@ export default function AdminProductsPage() {
                             )}
                         />
                         {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
-                      </div>
+                    </div>
                   </div>
+
+                  {/* Pre-Order Settings */}
+                  <div className="border p-4 rounded-md space-y-4">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="isPreOrder" className="font-semibold text-lg">Pre-Order Enabled</Label>
+                        <Controller
+                            control={control}
+                            name="isPreOrder"
+                            render={({ field }) => (
+                                <Switch checked={field.value} onCheckedChange={field.onChange} id="isPreOrder" />
+                            )}
+                        />
+                    </div>
+                    {watch('isPreOrder') && (
+                        <>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="releaseDate">Release Date</Label>
+                                    <Input id="releaseDate" type="date" {...register('releaseDate')} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="shippingDate">Shipping Date</Label>
+                                    <Input id="shippingDate" type="date" {...register('shippingDate')} />
+                                </div>
+                            </div>
+                             <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="preOrderLimit">Pre-Order Limit</Label>
+                                    <Input id="preOrderLimit" type="number" {...register('preOrderLimit')} className="dark:text-white" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="depositAmount">Deposit Amount (%)</Label>
+                                    <Input id="depositAmount" type="number" {...register('depositAmount')} className="dark:text-white" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="expectedDelivery">Expected Delivery Info</Label>
+                                <Input id="expectedDelivery" {...register('expectedDelivery')} className="dark:text-white" />
+                            </div>
+                        </>
+                    )}
+                  </div>
+
 
                   <div className="space-y-2">
                      <Label htmlFor="features">Features</Label>
-                     <Textarea id="features" {...register('features')} placeholder="e.g., Bluetooth 5.2, 30-hour battery" />
+                     <Textarea id="features" {...register('features')} placeholder="e.g., Bluetooth 5.2, 30-hour battery" className="dark:text-white" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" {...register('description')} />
+                    <Textarea id="description" {...register('description')} className="dark:text-white" />
                     {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
                     <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating || !productName || !features} className="mt-2">
                       {isGenerating ? <><Loader2 className="mr-2 animate-spin"/> Generating...</> : <><Bot className="mr-2"/> Generate with AI</>}
@@ -516,55 +568,56 @@ export default function AdminProductsPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
                           <Label htmlFor="rating">Rating (0-5)</Label>
-                          <Input id="rating" type="number" step="0.1" {...register('rating')} />
+                          <Input id="rating" type="number" step="0.1" {...register('rating')} className="dark:text-white" />
                           {errors.rating && <p className="text-sm text-destructive mt-1">{errors.rating.message}</p>}
                       </div>
                        <div className="space-y-2">
                           <Label htmlFor="reviews">Reviews</Label>
-                          <Input id="reviews" type="number" {...register('reviews')} />
+                          <Input id="reviews" type="number" {...register('reviews')} className="dark:text-white" />
                           {errors.reviews && <p className="text-sm text-destructive mt-1">{errors.reviews.message}</p>}
                       </div>
-                      <div className="flex items-center space-x-2 pt-6">
-                        <Controller
-                            name="isOfficialStore"
-                            control={control}
-                            render={({ field }) => (
-                                <Switch
-                                    id="isOfficialStore"
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                            )}
-                        />
-                      <Label htmlFor="isOfficialStore">Official Store</Label>
-                       </div>
-                       <div className="space-y-2 pt-6">
-                           <Label htmlFor="vendorId">Vendor</Label>
-                           <Controller
-                               name="vendorId"
-                               control={control}
-                               render={({ field }) => (
-                                   <Select 
-                                        onValueChange={(val) => field.onChange(val === 'none' ? '' : val)} 
-                                        value={field.value || 'none'}
-                                    >
-                                       <SelectTrigger id="vendorId">
-                                           <SelectValue placeholder="No vendor (store default)" />
-                                       </SelectTrigger>
-                                       <SelectContent>
-                                           <SelectItem value="none">No vendor (store default)</SelectItem>
-                                           {vendors.map((v) => (
-                                               <SelectItem key={v.uid} value={v.uid}>
-                                                   {v.storeName} {v.verified ? '✓' : ''}
-                                               </SelectItem>
-                                           ))}
-                                       </SelectContent>
-                                   </Select>
-                               )}
-                           />
-                       </div>
+
+                        <div className="flex items-center space-x-2 pt-6">
+                            <Controller
+                                name="isOfficialStore"
+                                control={control}
+                                render={({ field }) => (
+                                    <Switch
+                                        id="isOfficialStore"
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                )}
+                            />
+                        <Label htmlFor="isOfficialStore" className="dark:text-white">Official Store</Label>
+                         </div>
+                         <div className="space-y-2 pt-6">
+                             <Label htmlFor="vendorId" className="dark:text-white">Vendor</Label>
+                             <Controller
+                                 name="vendorId"
+                                 control={control}
+                                 render={({ field }) => (
+                                     <Select 
+                                          onValueChange={(val) => field.onChange(val === 'none' ? '' : val)} 
+                                          value={field.value || 'none'}
+                                      >
+                                         <SelectTrigger id="vendorId" className="dark:text-white">
+                                             <SelectValue placeholder="No vendor (store default)" />
+                                         </SelectTrigger>
+                                         <SelectContent>
+                                             <SelectItem value="none">No vendor (store default)</SelectItem>
+                                             {vendors.map((v) => (
+                                                 <SelectItem key={v.uid} value={v.uid}>
+                                                     {v.storeName} {v.verified ? '✓' : ''}
+                                                 </SelectItem>
+                                             ))}
+                                         </SelectContent>
+                                     </Select>
+                                 )}
+                             />
+                         </div>
+                     </div>
                    </div>
-                 </div>
 
                 <div className="space-y-4">
                   <Label>Images</Label>

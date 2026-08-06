@@ -17,6 +17,8 @@ import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { ProductCard } from '@/components/product-card';
+import { PreOrderButton } from '@/components/pre-order-button';
+import { CountdownTimer } from '@/components/countdown-timer';
 import type { ProductVariant } from '@/lib/products';
 import { products as staticProducts } from '@/lib/products';
 import { MOCKUP_BEST_SELLERS } from '@/lib/mock-products';
@@ -198,7 +200,10 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="flex flex-col">
-          <div>
+           <div>
+            {product.isPreOrder && (
+                <Badge variant="secondary" className="mb-2">Pre-Order Item</Badge>
+            )}
             <p className="text-sm font-medium text-primary">{product.category}</p>
             <h1 className="text-3xl lg:text-4xl font-bold mt-2">{product.name}</h1>
             <div className="flex items-center gap-2 mt-2">
@@ -210,6 +215,31 @@ export default function ProductDetailPage() {
                 <span className="text-sm text-muted-foreground">({product.reviews} reviews)</span>
             </div>
             <p className="text-3xl font-bold text-primary mt-4">GH₵{selectedVariant?.price.toFixed(2)}</p>
+            {product.isPreOrder && (
+              <div className="mt-4 bg-muted p-4 rounded-lg space-y-2">
+                {product.releaseDate && (
+                    <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">Release Date:</p>
+                        <p className="text-sm font-bold">{new Date(product.releaseDate).toLocaleDateString()}</p>
+                    </div>
+                )}
+                {product.shippingDate && (
+                    <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">Estimated Shipping:</p>
+                        <p className="text-sm font-bold">{new Date(product.shippingDate).toLocaleDateString()}</p>
+                    </div>
+                )}
+                {product.preOrderMessage && (
+                    <p className="text-sm italic text-muted-foreground pt-2 border-t border-border">{product.preOrderMessage}</p>
+                )}
+                {product.releaseDate && (
+                    <div className="pt-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">Time until release:</p>
+                        <CountdownTimer targetDate={product.releaseDate} />
+                    </div>
+                )}
+              </div>
+            )}
           </div>
           
           <Separator className="my-6" />
@@ -243,11 +273,11 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-2">
                 <Package className="h-4 w-4 text-muted-foreground" />
                 {selectedVariant.stock > 10 ? (
-                  <span className="text-sm text-green-600 font-medium">In Stock</span>
+                  <span className="text-sm text-green-600 dark:text-green-400 font-medium">In Stock</span>
                 ) : selectedVariant.stock > 0 ? (
-                  <span className="text-sm text-amber-600 font-medium">Only {selectedVariant.stock} left</span>
+                  <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">Only {selectedVariant.stock} left</span>
                 ) : (
-                  <Badge variant="destructive">Out of Stock</Badge>
+                  <Badge variant="destructive" className="dark:bg-red-900 dark:text-red-100">Out of Stock</Badge>
                 )}
               </div>
               {selectedVariant.stock === 0 && (
@@ -309,7 +339,7 @@ export default function ProductDetailPage() {
                 </Button>
             </div>
             {selectedVariant && selectedVariant.stock > 0 && selectedVariant.stock <= 10 && (
-              <p className="text-xs text-amber-600 mt-1">Hurry, only {selectedVariant.stock} items left</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Hurry, only {selectedVariant.stock} items left</p>
             )}
           </div>
           
@@ -337,11 +367,15 @@ export default function ProductDetailPage() {
             </div>
           </div>
          
-          <div className="mt-auto pt-6">
+<div className="mt-auto pt-6">
              <div className="flex items-center gap-4">
-                 <Button size="lg" className="flex-grow" onClick={handleAddToCart} disabled={!selectedVariant || selectedVariant.stock === 0}>
-                    <ShoppingCart className="mr-2" /> Add to Cart
-                </Button>
+                 {product.isPreOrder ? (
+                    <PreOrderButton product={product} quantity={quantity} variantId={selectedVariant?.id || ''} />
+                 ) : (
+                    <Button size="lg" className="flex-grow" onClick={handleAddToCart} disabled={!selectedVariant || selectedVariant.stock === 0}>
+                        <ShoppingCart className="mr-2" /> Add to Cart
+                    </Button>
+                 )}
                 <Button variant="outline" size="icon" className="w-12 h-12" onClick={handleToggleWishlist}>
                     <Heart className={cn('h-6 w-6', wishlisted ? 'text-red-500 fill-current' : 'text-foreground')} />
                 </Button>

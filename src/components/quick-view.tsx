@@ -12,6 +12,7 @@ import { Heart, ShoppingCart, Star, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/lib/products';
 import Link from 'next/link';
+import { PreOrderButton } from '@/components/pre-order-button';
 
 interface QuickViewProps {
   product: Product;
@@ -122,10 +123,14 @@ export function QuickView({ product, open, onOpenChange }: QuickViewProps) {
             <p className="text-sm text-muted-foreground mt-4 line-clamp-3">{product.description}</p>
 
             <div className="mt-auto pt-4 flex items-center gap-2">
-              <Button size="sm" className="flex-1" onClick={handleAddToCart} disabled={!selectedVariant || selectedVariant.stock === 0}>
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                {selectedVariant?.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-              </Button>
+              {product.isPreOrder ? (
+                <PreOrderButton product={product} quantity={1} variantId={selectedVariant?.id || ''} />
+              ) : (
+                <Button size="sm" className="flex-1" onClick={handleAddToCart} disabled={!selectedVariant || selectedVariant.stock === 0}>
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  {selectedVariant?.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                </Button>
+              )}
               <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleToggleWishlist}>
                 <Heart className={cn('h-4 w-4', wishlisted ? 'text-red-500 fill-current' : '')} />
               </Button>

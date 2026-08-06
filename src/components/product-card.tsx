@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Heart, Star, ShoppingCart, CheckCircle } from 'lucide-react';
+import { Heart, Star, ShoppingCart, CheckCircle, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import type { Product } from '@/lib/products';
@@ -106,6 +106,9 @@ export function ProductCard({ product }: ProductCardProps) {
             <Button variant="ghost" size="icon" onClick={handleToggleWishlist} className="absolute bottom-2 right-2 bg-black/20 hover:bg-black/40 text-white rounded-full h-8 w-8">
                 <Heart className={cn('h-5 w-5', wishlisted ? 'text-red-500 fill-current' : '')} />
             </Button>
+            {product.isPreOrder && (
+                <Badge variant="secondary" className="absolute top-2 left-2 z-10">Pre-Order</Badge>
+            )}
             {discount > 0 && (
                 <Badge variant="default" className="absolute top-0 right-0 rounded-none rounded-bl-md">-{discount}%</Badge>
             )}
@@ -137,10 +140,13 @@ export function ProductCard({ product }: ProductCardProps) {
                 </div>
                 <span className="text-xs text-muted-foreground">({product.reviews})</span>
             </div>
-            <Button size="sm" onClick={handleAddToCart} className="w-full mt-4">
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                {productVariants.length > 1 ? 'Select Options' : 'Add to Cart'}
-            </Button>
+             <Button size="sm" onClick={product.isPreOrder ? () => router.push(`/product/${product.id}`) : handleAddToCart} className="w-full mt-4">
+                 {product.isPreOrder ? (
+                    <> <Package className="mr-2 h-4 w-4" /> Pre-Order Now </>
+                 ) : (
+                    <> <ShoppingCart className="mr-2 h-4 w-4" /> {productVariants.length > 1 ? 'Select Options' : 'Add to Cart'} </>
+                 )}
+             </Button>
           </CardContent>
         </Card>
     </Link>

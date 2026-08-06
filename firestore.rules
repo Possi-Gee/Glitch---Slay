@@ -21,6 +21,14 @@ service cloud.firestore {
       return isSuperAdmin || (adminDocExists && hasValidRole && isNotExpired);
     }
 
+    // PreOrders can be created by authenticated users for themselves.
+    // PreOrders can be read/updated by the owner or any admin.
+    match /preOrders/{preOrderId} {
+      allow read, update: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId);
+      allow delete: if isAdmin();
+    }
+    
     // Site settings can be read by anyone, but only written by admins.
     match /site/{document} {
       allow read: if true;
@@ -48,9 +56,9 @@ service cloud.firestore {
       allow delete: if isAdmin(); // Only admins can delete orders
     }
 
-    // Coupons can only be managed by admins.
+    // Coupons can only be managed by admins, but read by authenticated users.
     match /coupons/{couponId} {
-      allow read: if isAdmin();
+      allow read: if request.auth != null;
       allow write, create, delete: if isAdmin();
     }
 
