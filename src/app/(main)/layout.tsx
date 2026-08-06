@@ -4,6 +4,7 @@ import { ChatWidget } from '@/components/chat-widget';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { NotificationPrompt } from '@/components/notification-prompt';
+import { FlashSales } from '@/components/flash-sales';
 
 export default function MainLayout({
   children,
@@ -13,6 +14,7 @@ export default function MainLayout({
   return (
     <div className="relative flex min-h-screen flex-col bg-background">
       <Header />
+      <FlashSales />
       <main className="flex-1">{children}</main>
       <Footer />
       <ChatWidget />

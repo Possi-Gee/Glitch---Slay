@@ -117,6 +117,7 @@ export default function AdminBlogPage() {
       const postId = editingId || doc(collection(db, 'blog_posts')).id;
       const postData: Record<string, any> = {
         ...data,
+        slug: data.slug.toLowerCase().trim().replace(/\s+/g, '-'), // Normalize slug
         ...(coverImage ? { coverImage } : {}),
       };
       if (!editingId) {

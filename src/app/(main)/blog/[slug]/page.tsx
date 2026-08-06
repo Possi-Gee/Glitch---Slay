@@ -14,7 +14,7 @@ type BlogPost = {
   slug: string;
   excerpt: string;
   content: string;
-  imageUrl?: string;
+  coverImage?: string; // Correct field name
   author: string;
   publishedAt: string;
 };
@@ -26,7 +26,7 @@ export default function BlogPostPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'blog_posts'), where('slug', '==', slug));
+    const q = query(collection(db, 'blog_posts'), where('slug', '==', slug.toLowerCase().trim()));
     const unsub = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
         const doc = snapshot.docs[0];
@@ -58,6 +58,11 @@ export default function BlogPostPage() {
 
       <header className="mb-8">
         <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
+        {post.coverImage && (
+            <div className="relative aspect-video w-full mb-6 overflow-hidden rounded-lg">
+                <img src={post.coverImage} alt={post.title} className="object-cover w-full h-full" />
+            </div>
+        )}
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {new Date(post.publishedAt).toLocaleDateString()}</span>
           <span className="flex items-center gap-1"><User className="h-4 w-4" /> {post.author}</span>

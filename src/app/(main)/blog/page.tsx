@@ -13,7 +13,7 @@ type BlogPost = {
   slug: string;
   excerpt: string;
   content: string;
-  imageUrl?: string;
+  coverImage?: string; // Correct field name
   author: string;
   publishedAt: string;
   createdAt: string;
@@ -53,6 +53,11 @@ export default function BlogPage() {
             <Link key={post.id} href={`/blog/${post.slug}`} className="block group">
               <Card className="hover:shadow-md transition-shadow">
                 <CardHeader>
+                  {post.coverImage && (
+                    <div className="relative aspect-video w-full mb-4 overflow-hidden rounded-md">
+                      <img src={post.coverImage} alt={post.title} className="object-cover w-full h-full" />
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(post.publishedAt).toLocaleDateString()}</span>
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {post.author}</span>

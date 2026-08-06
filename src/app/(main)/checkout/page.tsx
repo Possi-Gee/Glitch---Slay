@@ -104,8 +104,48 @@ export default function CheckoutPage() {
     }
   });
 
-  const deliveryMethod = form.watch('deliveryMethod');
-  const paymentMethod = form.watch('paymentMethod');
+  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+  const [deliveryCoords, setDeliveryCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  const captureLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: 'Geolocation not supported',
+        description: 'Your browser does not support location tracking.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setDeliveryCoords({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        toast({
+          title: 'Location Captured',
+          description: 'Your delivery location has been set automatically.',
+        });
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        toast({
+          title: 'Location Required',
+          description: 'Please enable location services in your browser settings for home delivery.',
+          variant: 'destructive',
+        });
+      }
+    );
+  };
+
+  useEffect(() => {
+    if (deliveryMethod === 'delivery') {
+      captureLocation();
+    } else {
+        setDeliveryCoords(null);
+    }
+  }, [deliveryMethod]);
 
   const subtotal = items.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
   const tax = subtotal * (settings.taxRate / 100);
@@ -235,6 +275,7 @@ export default function CheckoutPage() {
       } : { fullName: data.fullName || activeUserName, email: data.email!, address: '', city: '', state: '', zip: '', country: '' },
       paymentMethod,
       deliveryMethod,
+      deliveryCoords,
       status: 'Pending',
       orderNotes: orderNotes,
       appName: "Glitch & Slay",

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useProduct } from '@/hooks/use-product';
 import { MOCKUP_BEST_SELLERS } from '@/lib/mock-products';
 import { ProductCard } from '@/components/product-card';
@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const query = searchParams.get('q') || '';
   const { state: productState } = useProduct();
   const { products, loading } = productState;
@@ -76,22 +77,25 @@ export default function SearchPage() {
         </p>
       </div>
 
+      <div className="mb-8">
+        <div className="relative flex-grow max-w-md">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            defaultValue={query}
+            placeholder="Search products..."
+            className="pl-10"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const val = (e.target as HTMLInputElement).value.trim();
+                if (val) router.push(`/search?q=${encodeURIComponent(val)}`);
+              }
+            }}
+          />
+        </div>
+      </div>
+
       {query && (
         <div className="flex flex-wrap items-center gap-4 mb-8 pb-6 border-b">
-          <div className="relative flex-grow max-w-md">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              defaultValue={query}
-              placeholder="Search products..."
-              className="pl-10"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const val = (e.target as HTMLInputElement).value.trim();
-                  if (val) window.history.replaceState(null, '', `/search?q=${encodeURIComponent(val)}`);
-                }
-              }}
-            />
-          </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Category" />

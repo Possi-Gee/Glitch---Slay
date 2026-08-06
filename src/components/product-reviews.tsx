@@ -186,7 +186,10 @@ export function ProductReviews({ product }: ProductReviewsProps) {
         return dateB.getTime() - dateA.getTime();
       });
 
-      setReviews(fetchedReviews);
+      setReviews(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(fetchedReviews)) return prev;
+          return fetchedReviews;
+      });
       setLoading(false);
     });
     return () => unsubscribe();

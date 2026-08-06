@@ -2,7 +2,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Sun, Moon, Wrench, User, LogOut, Heart, ShoppingBag, Search, History } from 'lucide-react';
+import { Sun, Moon, Wrench, User, LogOut, Heart, ShoppingBag, History } from 'lucide-react';
+import { SearchBar } from '@/components/search-bar';
 import { useTheme } from '@/context/theme-provider';
 import { Button } from '@/components/ui/button';
 import { useSiteSettings } from '@/hooks/use-site-settings';
@@ -26,6 +27,7 @@ import { useEffect, useState } from 'react';
 
 const mainNavItems = [
   { href: '/', label: 'Home' },
+  { href: '/pre-orders', label: 'Pre-Orders' },
   { href: '/#shop-catalog', label: 'Shop' },
   { href: '/#best-sellers', label: 'Best Sellers' },
   { href: '/search', label: 'Search' },
@@ -49,8 +51,8 @@ export function Header() {
   useEffect(() => {
     setIsClient(true);
     
-    // Set initial hash
     if (typeof window !== 'undefined') {
+      // Set initial hash once
       setActiveHash(window.location.hash);
       
       const handleHashChange = () => {
@@ -60,7 +62,7 @@ export function Header() {
       window.addEventListener('hashchange', handleHashChange);
       return () => window.removeEventListener('hashchange', handleHashChange);
     }
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   const totalCartItems = cartState.items.reduce((sum, item) => sum + item.quantity, 0);
   const totalWishlistItems = wishlistState.items.length;
@@ -75,10 +77,6 @@ export function Header() {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
-
-  const handleSearchClick = () => {
-    router.push('/search');
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -135,10 +133,8 @@ export function Header() {
         {/* User Actions - Right Aligned */}
         <div className="flex items-center space-x-2">
           
-          {/* Search Button */}
-          <Button variant="ghost" size="icon" onClick={handleSearchClick} aria-label="Search">
-            <Search className="h-5 w-5 text-foreground/80 hover:text-accent transition-colors" />
-          </Button>
+          {/* Search Bar */}
+          <SearchBar />
 
           {/* User Account / Login */}
           {user ? (
