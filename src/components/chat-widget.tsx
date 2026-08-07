@@ -60,7 +60,7 @@ export function ChatWidget() {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-20 md:bottom-4 right-4 z-[55] flex flex-col items-end">
         <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -69,7 +69,7 @@ export function ChatWidget() {
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.2 }}
             >
-              <Card className="w-80 h-[500px] flex flex-col shadow-2xl">
+              <Card className="w-80 h-[420px] md:h-[500px] flex flex-col shadow-2xl">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle>Support Chat</CardTitle>

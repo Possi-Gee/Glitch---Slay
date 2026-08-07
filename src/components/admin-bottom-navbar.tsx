@@ -44,16 +44,16 @@ export function AdminBottomNavbar({ adminRole: _adminRole }: AdminBottomNavbarPr
 
   return (
     <>
-      {/* More Menu Overlay */}
+      {/* More Menu Overlay - sits above the bottom bar */}
       {moreOpen && (
-        <div className="fixed inset-0 z-40 bg-background/95 backdrop-blur flex flex-col">
-          <div className="flex items-center justify-between px-4 py-4 border-b">
+        <div className="fixed inset-0 z-[60] bg-background flex flex-col">
+          <div className="flex items-center justify-between px-4 py-4 border-b shrink-0">
             <span className="text-base font-bold tracking-wide">All Admin Pages</span>
             <button onClick={() => setMoreOpen(false)} aria-label="Close menu">
               <X className="h-6 w-6" />
             </button>
           </div>
-          <nav className="flex flex-col p-4 space-y-1 overflow-y-auto">
+          <nav className="flex flex-col p-4 space-y-1 overflow-y-auto flex-1 pb-6">
             {[...primaryNavItems, ...moreNavItems].map((item) => (
               <Link
                 key={item.href}
