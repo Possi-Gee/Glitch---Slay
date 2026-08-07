@@ -151,31 +151,31 @@ export default function AdminDashboardPage() {
         );
         if (lowStock.length === 0) return null;
         return (
-          <Card className="border-amber-300 bg-amber-50">
+          <Card className="border-amber-300 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
-                <CardTitle className="text-amber-800">Low Stock Alert</CardTitle>
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                <CardTitle className="text-amber-800 dark:text-amber-400">Low Stock Alert</CardTitle>
               </div>
-              <p className="text-sm text-amber-700">{lowStock.length} product(s) running low on stock.</p>
+              <p className="text-sm text-amber-700 dark:text-amber-300">{lowStock.length} product(s) running low on stock.</p>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Variant</TableHead>
-                    <TableHead className="text-right">Stock</TableHead>
+                  <TableRow className="border-amber-200 dark:border-amber-900/30 hover:bg-transparent">
+                    <TableHead className="text-amber-800 dark:text-amber-400 font-semibold">Product</TableHead>
+                    <TableHead className="text-amber-800 dark:text-amber-400 font-semibold">Variant</TableHead>
+                    <TableHead className="text-right text-amber-800 dark:text-amber-400 font-semibold">Stock</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {lowStock.slice(0, 10).map(p => {
                     const lowVariant = p.variants.find(v => v.stock > 0 && v.stock <= 10);
                     return (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-medium text-sm">{p.name}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{lowVariant?.name || '—'}</TableCell>
-                        <TableCell className="text-right text-sm font-bold text-amber-700">{lowVariant?.stock || 0}</TableCell>
+                      <TableRow key={p.id} className="border-amber-200 dark:border-amber-900/30 hover:bg-amber-100/50 dark:hover:bg-amber-950/30">
+                        <TableCell className="font-medium text-sm text-amber-950 dark:text-amber-50">{p.name}</TableCell>
+                        <TableCell className="text-sm text-amber-800 dark:text-amber-300">{lowVariant?.name || '—'}</TableCell>
+                        <TableCell className="text-right text-sm font-bold text-amber-700 dark:text-amber-400">{lowVariant?.stock || 0}</TableCell>
                       </TableRow>
                     );
                   })}

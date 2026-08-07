@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarProvider,
 } from '@/components/ui/sidebar';
-import { Package, Home, LayoutDashboard, Settings, ShoppingCart, Loader2, ShieldX, Users, RotateCw, Tag, FileText, MessageSquare, Store, Printer } from 'lucide-react';
+import { Package, Home, LayoutDashboard, Settings, ShoppingCart, Loader2, ShieldX, Users, RotateCw, Tag, FileText, MessageSquare, Store, Printer, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AdminBottomNavbar } from '@/components/admin-bottom-navbar';
@@ -142,6 +142,11 @@ function AdminLayoutContent({ children, adminRole }: { children: React.ReactNode
       href: '/admin/orders',
       label: 'Orders',
       icon: ShoppingCart,
+    },
+    {
+      href: '/admin/pre-orders',
+      label: 'Pre-Orders',
+      icon: ClipboardList,
     },
     {
       href: '/admin/products',

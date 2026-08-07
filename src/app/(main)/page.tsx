@@ -190,7 +190,7 @@ export default function HomePage() {
             <Button 
               variant="outline" 
               className="border-white text-white hover:bg-white/10 hover:text-white text-xs font-bold tracking-widest uppercase px-8 py-6 rounded-none font-sans bg-transparent"
-              onClick={() => handleCategorySelect('Clothing')}
+              onClick={() => handleCategorySelect('Dresses')}
             >
               New Arrivals
             </Button>
@@ -258,39 +258,39 @@ export default function HomePage() {
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             
-            {/* Category 1: Bags */}
+            {/* Category 1: Dresses */}
             <div 
               className="flex flex-col items-center bg-muted/30 border border-border/60 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer group"
-              onClick={() => handleCategorySelect('Bags')}
+              onClick={() => handleCategorySelect('Dresses')}
             >
               <div className="relative aspect-square w-full bg-white border border-border/40 overflow-hidden mb-4">
                 <Image 
                   src="/cat-bags.png" 
-                  alt="Bags Category" 
+                  alt="Dresses Category" 
                   fill 
                   sizes="(max-width: 768px) 50vw, 25vw"
                   className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
                 />
               </div>
-              <span className="font-sans text-xs font-bold uppercase tracking-widest text-foreground mb-1">Bags</span>
+              <span className="font-sans text-xs font-bold uppercase tracking-widest text-foreground mb-1">Dresses</span>
               <span className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground border-b border-transparent group-hover:border-accent group-hover:text-accent transition-all pb-0.5">Shop Now</span>
             </div>
 
-            {/* Category 2: Clothing */}
+            {/* Category 2: Sleepwear */}
             <div 
               className="flex flex-col items-center bg-muted/30 border border-border/60 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer group"
-              onClick={() => handleCategorySelect('Clothing')}
+              onClick={() => handleCategorySelect('Sleepwear')}
             >
               <div className="relative aspect-square w-full bg-white border border-border/40 overflow-hidden mb-4">
                 <Image 
                   src="/cat-clothing.png" 
-                  alt="Clothing Category" 
+                  alt="Sleepwear Category" 
                   fill 
                   sizes="(max-width: 768px) 50vw, 25vw"
                   className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
                 />
               </div>
-              <span className="font-sans text-xs font-bold uppercase tracking-widest text-foreground mb-1">Clothing</span>
+              <span className="font-sans text-xs font-bold uppercase tracking-widest text-foreground mb-1">Sleepwear</span>
               <span className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground border-b border-transparent group-hover:border-accent group-hover:text-accent transition-all pb-0.5">Shop Now</span>
             </div>
 
@@ -312,21 +312,21 @@ export default function HomePage() {
               <span className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground border-b border-transparent group-hover:border-accent group-hover:text-accent transition-all pb-0.5">Shop Now</span>
             </div>
 
-            {/* Category 4: Footwear */}
+            {/* Category 4: Bags and phone covers */}
             <div 
               className="flex flex-col items-center bg-muted/30 border border-border/60 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer group"
-              onClick={() => handleCategorySelect('Footwear')}
+              onClick={() => handleCategorySelect('Bags and phone covers')}
             >
               <div className="relative aspect-square w-full bg-white border border-border/40 overflow-hidden mb-4">
                 <Image 
                   src="/cat-footwear.png" 
-                  alt="Footwear Category" 
+                  alt="Bags and phone covers Category" 
                   fill 
                   sizes="(max-width: 768px) 50vw, 25vw"
                   className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
                 />
               </div>
-              <span className="font-sans text-xs font-bold uppercase tracking-widest text-foreground mb-1">Footwear</span>
+              <span className="font-sans text-xs font-bold uppercase tracking-widest text-foreground mb-1">Bags and phone covers</span>
               <span className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground border-b border-transparent group-hover:border-accent group-hover:text-accent transition-all pb-0.5">Shop Now</span>
             </div>
 

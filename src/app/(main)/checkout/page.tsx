@@ -104,7 +104,8 @@ export default function CheckoutPage() {
     }
   });
 
-  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+  const deliveryMethod = form.watch('deliveryMethod');
+  const paymentMethod = form.watch('paymentMethod');
   const [deliveryCoords, setDeliveryCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const captureLocation = () => {
@@ -275,7 +276,7 @@ export default function CheckoutPage() {
       } : { fullName: data.fullName || activeUserName, email: data.email!, address: '', city: '', state: '', zip: '', country: '' },
       paymentMethod,
       deliveryMethod,
-      deliveryCoords,
+      deliveryCoords: deliveryCoords ?? undefined,
       status: 'Pending',
       orderNotes: orderNotes,
       appName: "Glitch & Slay",

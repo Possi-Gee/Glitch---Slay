@@ -57,6 +57,7 @@ import { Separator } from '@/components/ui/separator';
 import { CameraCapture } from '@/components/camera-capture';
 import { errorEmitter } from '@/lib/firebase/error-emitter';
 import { FirestorePermissionError } from '@/lib/firebase/errors';
+import { DEFAULT_PRODUCT_CATEGORIES, getProductCategoryOptions } from '@/lib/categories';
 
 
 // Helper function to generate unique IDs
@@ -119,19 +120,7 @@ export default function AdminProductsPage() {
   const [sortBy, setSortBy] = useState('name-asc');
 
   const uniqueCategories = useMemo(() => {
-    const baseCategories = [
-      "kitchen ware, and utensils",
-      "Sewing accessories",
-      "Bedsheets",
-      "Slippers and shoes",
-      "Bubu",
-      "Kids wear",
-      "Cosmetics",
-      "Fabrics",
-      "African prints",
-    ];
-    const allCategories = new Set([...baseCategories, ...products.map((p) => p.category)]);
-    return Array.from(allCategories).sort();
+    return getProductCategoryOptions(products.map((p) => p.category));
   }, [products]);
   
   const categories = useMemo(() => {
@@ -484,26 +473,15 @@ export default function AdminProductsPage() {
                       <Input id="name" {...register('name')} />
                       {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
                     </div>
-                     <div className="space-y-2">
+                      <div className="space-y-2">
                         <Label htmlFor="category">Category</Label>
-                        <Controller
-                            control={control}
-                            name="category"
-                            render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                    <SelectTrigger id="category">
-                                        <SelectValue placeholder="Select a category" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {uniqueCategories.map(category => (
-                                            <SelectItem key={category} value={category}>
-                                                {category}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        />
+                        <Input id="category" list="product-categories" {...register('category')} placeholder="Select or type a category" />
+                        <datalist id="product-categories">
+                          {DEFAULT_PRODUCT_CATEGORIES.map((category) => (
+                            <option key={category} value={category} />
+                          ))}
+                        </datalist>
+                        <p className="text-xs text-muted-foreground">Pick a default category or type a new one.</p>
                         {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
                     </div>
                   </div>

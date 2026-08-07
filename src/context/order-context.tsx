@@ -51,6 +51,8 @@ export type Order = {
     carrier?: string;
     trackingUrl?: string;
     vendorIds?: string[];
+    deliveryCoords?: { lat: number; lng: number };
+    adminLocation?: { lat: number; lng: number };
 };
 
 

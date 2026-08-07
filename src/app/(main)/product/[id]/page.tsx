@@ -272,7 +272,9 @@ export default function ProductDetailPage() {
             <div className="mb-4">
               <div className="flex items-center gap-2">
                 <Package className="h-4 w-4 text-muted-foreground" />
-                {selectedVariant.stock > 10 ? (
+                {product.isPreOrder ? (
+                  <span className="text-sm text-primary font-medium">Available for Pre-Order</span>
+                ) : selectedVariant.stock > 10 ? (
                   <span className="text-sm text-green-600 dark:text-green-400 font-medium">In Stock</span>
                 ) : selectedVariant.stock > 0 ? (
                   <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">Only {selectedVariant.stock} left</span>
@@ -280,7 +282,7 @@ export default function ProductDetailPage() {
                   <Badge variant="destructive" className="dark:bg-red-900 dark:text-red-100">Out of Stock</Badge>
                 )}
               </div>
-              {selectedVariant.stock === 0 && (
+              {selectedVariant.stock === 0 && !product.isPreOrder && (
                 <div className="mt-3 flex items-center gap-2">
                   <input
                     type="email"
@@ -321,24 +323,24 @@ export default function ProductDetailPage() {
           <div className="mb-6">
             <Label htmlFor="quantity" className="text-lg font-semibold mb-2 block">Quantity</Label>
             <div className="flex items-center gap-2">
-                 <Button variant="outline" size="icon" onClick={() => handleQuantityChange(-1)} disabled={!selectedVariant || selectedVariant.stock === 0}>
+                 <Button variant="outline" size="icon" onClick={() => handleQuantityChange(-1)} disabled={!selectedVariant || (selectedVariant.stock === 0 && !product.isPreOrder)}>
                     <Minus className="h-4 w-4" />
                 </Button>
                 <Input 
                     id="quantity"
                     type="number"
                     min="1"
-                    max={selectedVariant?.stock || 1}
+                    max={product.isPreOrder ? (product.preOrderLimit || 99) : (selectedVariant?.stock || 1)}
                     value={quantity}
                     onChange={handleQuantityInputChange}
                     className="h-10 w-20 text-center"
-                    disabled={!selectedVariant || selectedVariant.stock === 0}
+                    disabled={!selectedVariant || (selectedVariant.stock === 0 && !product.isPreOrder)}
                 />
-                 <Button variant="outline" size="icon" onClick={() => handleQuantityChange(1)} disabled={!selectedVariant || selectedVariant.stock === 0 || quantity >= (selectedVariant?.stock || 0)}>
+                 <Button variant="outline" size="icon" onClick={() => handleQuantityChange(1)} disabled={!selectedVariant || (selectedVariant.stock === 0 && !product.isPreOrder) || quantity >= (product.isPreOrder ? (product.preOrderLimit || 99) : (selectedVariant?.stock || 0))}>
                     <Plus className="h-4 w-4" />
                 </Button>
             </div>
-            {selectedVariant && selectedVariant.stock > 0 && selectedVariant.stock <= 10 && (
+            {selectedVariant && selectedVariant.stock > 0 && selectedVariant.stock <= 10 && !product.isPreOrder && (
               <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Hurry, only {selectedVariant.stock} items left</p>
             )}
           </div>

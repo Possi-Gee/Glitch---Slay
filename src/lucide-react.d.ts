@@ -87,6 +87,7 @@ declare module 'lucide-react' {
   export const ShieldX: Icon;
   export const ShoppingBag: Icon;
   export const ShoppingCart: Icon;
+  export const ClipboardList: Icon;
   export const SlidersHorizontal: Icon;
   export const Smartphone: Icon;
   export const Sparkles: Icon;
