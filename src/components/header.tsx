@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sun, Moon, Wrench, User, LogOut, Heart, ShoppingBag, History } from 'lucide-react';
+import { Sun, Moon, Wrench, User, LogOut, Heart, ShoppingBag, History, Menu, X } from 'lucide-react';
 import { SearchBar } from '@/components/search-bar';
 import { useTheme } from '@/context/theme-provider';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ export function Header() {
   const { state: wishlistState } = useWishlist();
   const [isClient, setIsClient] = useState(false);
   const [activeHash, setActiveHash] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -83,7 +84,7 @@ export function Header() {
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4 sm:px-8">
         
         {/* Brand Logo & Name */}
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-border bg-white flex items-center justify-center">
              <Image 
                src={settings.logoUrl || '/logo.jpg'} 
@@ -98,10 +99,9 @@ export function Header() {
            </div>
         </Link>
         
-        {/* Navigation Items - Centered */}
+        {/* Navigation Items - Centered, desktop only */}
         <nav className="hidden md:flex items-center space-x-8 text-xs font-semibold uppercase tracking-widest">
             {mainNavItems.map(item => {
-                // Check if path is home page and check hashes separately
                 const isItemWithHash = item.href.includes('#');
                 let isActive = false;
                 
@@ -109,7 +109,6 @@ export function Header() {
                   const [path, hash] = item.href.split('#');
                   isActive = pathname === path && activeHash === `#${hash}`;
                 } else {
-                  // For normal paths, make sure we don't highlight Home ('/') when on a page with hash
                   isActive = item.href === '/' 
                     ? pathname === '/' && !activeHash
                     : pathname === item.href;
@@ -207,8 +206,54 @@ export function Header() {
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-foreground/80" />
           </Button>
 
+          {/* Mobile Hamburger Menu Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+
         </div>
       </div>
+
+      {/* Mobile Dropdown Nav Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-border/40 bg-background/98 backdrop-blur">
+          <nav className="container flex flex-col py-3 px-4 space-y-1 max-w-screen-2xl">
+            {mainNavItems.map(item => {
+              const isItemWithHash = item.href.includes('#');
+              let isActive = false;
+              if (isItemWithHash) {
+                const [path, hash] = item.href.split('#');
+                isActive = pathname === path && activeHash === `#${hash}`;
+              } else {
+                isActive = item.href === '/'
+                  ? pathname === '/' && !activeHash
+                  : pathname === item.href;
+              }
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'block py-2.5 px-3 rounded-md text-sm font-semibold uppercase tracking-widest transition-colors',
+                    isActive
+                      ? 'bg-accent/10 text-accent'
+                      : 'text-foreground/75 hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
