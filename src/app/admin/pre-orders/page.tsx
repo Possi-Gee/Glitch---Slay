@@ -16,6 +16,8 @@ import { MoreHorizontal, Search, RotateCw, ClipboardList, Mail, User, MapPin, Fi
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
+import { sendOrderUpdateEmail } from '@/ai/flows/send-order-update-email';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 
 const orderStatuses: PreOrder['orderStatus'][] = ['PENDING', 'CONFIRMED', 'READY_TO_SHIP', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 const paymentStatuses: PreOrder['paymentStatus'][] = ['PENDING', 'PAID', 'REFUNDED'];
@@ -46,6 +48,7 @@ const getPreOrderPaymentLabel = (status: PreOrder['paymentStatus'], balance: num
 
 export default function AdminPreOrdersPage() {
   const { toast } = useToast();
+  const { state: siteSettings } = useSiteSettings();
   const [preOrders, setPreOrders] = useState<PreOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -92,6 +95,9 @@ export default function AdminPreOrdersPage() {
 
   const handleOrderStatusChange = async (preOrderId: string, status: PreOrder['orderStatus']) => {
     const preOrderRef = doc(db, 'preOrders', preOrderId);
+    const preOrder = preOrders.find(p => p.id === preOrderId);
+    if (!preOrder) return;
+
     try {
       await updateDoc(preOrderRef, {
         orderStatus: status,
@@ -101,6 +107,54 @@ export default function AdminPreOrdersPage() {
         title: 'Status Updated',
         description: `Pre-order status marked as ${status}.`,
       });
+
+      // Send email notification to customer if they have an email address
+      if (preOrder.shippingAddress?.email) {
+        const appName = siteSettings.appName || 'Glitch & Slay';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://glitchandslay.com';
+        const absoluteImage = preOrder.productImage && (preOrder.productImage.startsWith('http')
+          ? preOrder.productImage
+          : `${baseUrl.replace(/\/$/, '')}/${preOrder.productImage.replace(/^\//, '')}`);
+
+        const emailItems = [{
+          id: preOrder.id,
+          productId: preOrder.productId,
+          name: preOrder.productName,
+          image: absoluteImage || 'https://placehold.co/64x64/EFEFEF/333333?text=Product',
+          quantity: preOrder.quantity,
+          variant: {
+            id: preOrder.variant.id,
+            name: preOrder.variant.name,
+            price: preOrder.variant.price,
+            stock: 0,
+          }
+        }];
+
+        const emailResult = await sendOrderUpdateEmail({
+          status: status, // status is 'PENDING', 'CONFIRMED', etc.
+          recipientEmail: preOrder.shippingAddress.email,
+          customerName: preOrder.shippingAddress.fullName || 'Customer',
+          appName: appName,
+          orderId: preOrder.id,
+          deliveryMethod: preOrder.deliveryMethod,
+          paymentMethod: preOrder.paymentStatus === 'PAID' ? 'card' : 'deposit',
+          total: preOrder.totalPrice,
+          items: emailItems,
+        });
+
+        if (emailResult.success) {
+          toast({
+            title: 'Email Sent',
+            description: emailResult.message,
+          });
+        } else {
+          toast({
+            title: 'Email Failed',
+            description: emailResult.message,
+            variant: 'destructive',
+          });
+        }
+      }
     } catch (error: any) {
       toast({
         title: 'Update Failed',

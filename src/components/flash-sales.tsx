@@ -55,18 +55,18 @@ export function FlashSales() {
   }
   
   return (
-    <div className="bg-red-600 text-white p-2 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-            <Zap className="h-6 w-6 text-yellow-300" />
-            <span className="text-lg font-bold">Flash Sales</span>
+    <div className="bg-red-600 text-white p-2 flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+            <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-300" />
+            <span className="text-sm sm:text-lg font-bold">Flash Sales</span>
         </div>
-        <div className="text-sm">
-          <span>TIME LEFT: </span>
+        <div className="text-xs sm:text-sm">
+          <span className="hidden sm:inline">TIME LEFT: </span>
           <span className="font-bold">{timeLeft.hours}h : {timeLeft.minutes}m : {timeLeft.seconds}s</span>
         </div>
       </div>
-      <Link href="/sales" className="text-sm font-semibold hover:underline">
+      <Link href="/sales" className="text-xs sm:text-sm font-semibold hover:underline">
         See All
       </Link>
     </div>

@@ -81,7 +81,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4 sm:px-8">
+      <div className="container mx-auto flex h-16 max-w-screen-2xl items-center justify-between px-4 sm:px-8">
         
         {/* Brand Logo & Name */}
         <Link href="/" className="flex items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
@@ -95,7 +95,7 @@ export function Header() {
            </div>
            <div className="flex flex-col">
              <span className="font-serif text-lg font-bold tracking-wider leading-none uppercase text-foreground">{settings.appName}</span>
-             <span className="text-[10px] font-sans font-medium tracking-widest text-muted-foreground uppercase mt-0.5">Fashion that speaks</span>
+             <span className="hidden sm:block text-[10px] font-sans font-medium tracking-widest text-muted-foreground uppercase mt-0.5">Fashion that speaks</span>
            </div>
         </Link>
         
@@ -137,26 +137,28 @@ export function Header() {
 
           {/* User Account / Login */}
           {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                     <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} />
-                     <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                 <DropdownMenuItem asChild><Link href="/profile"><User className="mr-2 h-4 w-4"/>Profile</Link></DropdownMenuItem>
-                 <DropdownMenuItem asChild><Link href="/orders"><History className="mr-2 h-4 w-4"/>Orders</Link></DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/>Log out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="hidden md:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                       <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} />
+                       <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                   <DropdownMenuItem asChild><Link href="/profile"><User className="mr-2 h-4 w-4"/>Profile</Link></DropdownMenuItem>
+                   <DropdownMenuItem asChild><Link href="/orders"><History className="mr-2 h-4 w-4"/>Orders</Link></DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/>Log out</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
            ) : (
              !loading && (
-               <Button variant="ghost" size="icon" asChild aria-label="Login">
+               <Button variant="ghost" size="icon" asChild aria-label="Login" className="hidden md:inline-flex">
                  <Link href="/login">
                    <User className="h-5 w-5 text-foreground/80 hover:text-accent transition-colors" />
                  </Link>
@@ -165,7 +167,7 @@ export function Header() {
            )}
 
           {/* Wishlist Button */}
-          <Button variant="ghost" size="icon" asChild className="relative" aria-label="Wishlist">
+          <Button variant="ghost" size="icon" asChild className="relative hidden sm:inline-flex" aria-label="Wishlist">
             <Link href="/wishlist">
               <Heart className="h-5 w-5 text-foreground/80 hover:text-accent transition-colors" />
               {isClient && totalWishlistItems > 0 && (
@@ -177,7 +179,7 @@ export function Header() {
           </Button>
 
           {/* Cart Button */}
-          <Button variant="ghost" size="icon" asChild className="relative" aria-label="Cart">
+          <Button variant="ghost" size="icon" asChild className="relative hidden md:inline-flex" aria-label="Cart">
             <Link href="/cart">
               <ShoppingBag className="h-5 w-5 text-foreground/80 hover:text-accent transition-colors" />
               {isClient && totalCartItems > 0 && (
@@ -189,7 +191,7 @@ export function Header() {
           </Button>
 
           {/* System Admin Wrench */}
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex">
             <Link href="/admin/dashboard" aria-label="Admin Panel">
               <Wrench className="h-5 w-5 text-foreground/60 hover:text-accent transition-colors" />
             </Link>
@@ -223,7 +225,7 @@ export function Header() {
       {/* Mobile Dropdown Nav Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border/40 bg-background/98 backdrop-blur">
-          <nav className="container flex flex-col py-3 px-4 space-y-1 max-w-screen-2xl">
+          <nav className="container mx-auto flex flex-col py-3 px-4 space-y-1 max-w-screen-2xl">
             {mainNavItems.map(item => {
               const isItemWithHash = item.href.includes('#');
               let isActive = false;
@@ -251,6 +253,34 @@ export function Header() {
                 </Link>
               );
             })}
+            
+            {/* Wishlist - Mobile Only */}
+            <Link
+              href="/wishlist"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                'sm:hidden block py-2.5 px-3 rounded-md text-sm font-semibold uppercase tracking-widest transition-colors',
+                pathname === '/wishlist'
+                  ? 'bg-accent/10 text-accent'
+                  : 'text-foreground/75 hover:bg-muted hover:text-foreground'
+              )}
+            >
+              Wishlist {totalWishlistItems > 0 && `(${totalWishlistItems})`}
+            </Link>
+
+            {/* Admin Panel - Mobile Only */}
+            <Link
+              href="/admin/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                'block py-2.5 px-3 rounded-md text-sm font-semibold uppercase tracking-widest transition-colors',
+                pathname.startsWith('/admin')
+                  ? 'bg-accent/10 text-accent'
+                  : 'text-foreground/75 hover:bg-muted hover:text-foreground'
+              )}
+            >
+              Admin Panel
+            </Link>
           </nav>
         </div>
       )}

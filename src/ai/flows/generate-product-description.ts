@@ -69,10 +69,19 @@ const generateProductDescriptionFlow = ai.defineFlow(
     outputSchema: GenerateProductDescriptionOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    if (!output) {
-      throw new Error('The AI model did not return an output. This may be due to safety settings or a temporary issue.');
+    try {
+      const {output} = await prompt(input);
+      if (!output) {
+        throw new Error('The AI model did not return an output. This may be due to safety settings or a temporary issue.');
+      }
+      return output;
+    } catch (error: any) {
+      console.error("AI product description generation failed:", error);
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('limit')) {
+        throw new Error('Our AI copywriting assistant has reached its temporary API quota limit. Please try again in a few moments.');
+      }
+      throw error;
     }
-    return output;
   }
 );

@@ -111,16 +111,25 @@ const supportChatFlow = ai.defineFlow(
       { role: 'user', content: [{ text: input.message }] },
     ];
 
-    const { output } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash',
-      messages,
-      tools: [faqTool, orderStatusTool, productSearchTool],
-      config: {
-        // Lower temperature for more predictable, less "creative" responses
-        temperature: 0.3,
-      }
-    });
+    try {
+      const { output } = await ai.generate({
+        model: 'googleai/gemini-2.0-flash',
+        messages,
+        tools: [faqTool, orderStatusTool, productSearchTool],
+        config: {
+          // Lower temperature for more predictable, less "creative" responses
+          temperature: 0.3,
+        }
+      });
 
-    return output?.content[0].text || "I'm sorry, I'm having trouble understanding. Could you please rephrase?";
+      return output?.content[0].text || "I'm sorry, I'm having trouble understanding. Could you please rephrase?";
+    } catch (error: any) {
+      console.error("AI support chat generation failed:", error);
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('limit')) {
+        return "I'm sorry, our AI support assistant is currently experiencing very high demand and has temporarily exceeded its rate limits. Please try again in a few moments, or check our FAQ page for quick answers!";
+      }
+      return "I'm sorry, I encountered an unexpected error while trying to process your request. Please try again in a few moments.";
+    }
   }
 );

@@ -69,19 +69,19 @@ export function ChatWidget() {
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.2 }}
             >
-              <Card className="w-80 h-[420px] md:h-[500px] flex flex-col shadow-2xl">
-                <CardHeader className="flex flex-row items-center justify-between">
+              <Card className="w-[calc(100vw-32px)] sm:w-80 h-[380px] md:h-[500px] max-h-[calc(100vh-120px)] flex flex-col shadow-2xl">
+                <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
                   <div>
-                    <CardTitle>Support Chat</CardTitle>
-                    <CardDescription>How can I help you today?</CardDescription>
+                    <CardTitle className="text-lg">Support Chat</CardTitle>
+                    <CardDescription className="text-xs">How can I help you today?</CardDescription>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                    <X className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
+                    <X className="h-4 w-4" />
                   </Button>
                 </CardHeader>
-                <CardContent className="flex-1 p-0">
-                  <ScrollArea className="h-full p-4">
-                     <div className="space-y-4">
+                <CardContent className="flex-1 overflow-hidden p-0">
+                  <ScrollArea className="h-full px-4 py-2">
+                     <div className="space-y-4 pb-4">
                         <ChatMessage message={{role: 'model', content:[{text: "Hello! I'm your friendly support bot. You can ask me about our products, your orders, or our store policies."}]}} />
                         {messages.map((message, index) => (
                            <ChatMessage key={index} message={message} />
@@ -90,16 +90,17 @@ export function ChatWidget() {
                       </div>
                   </ScrollArea>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="p-3 pt-0">
                   <form onSubmit={handleSendMessage} className="w-full flex items-center gap-2">
                     <Input
                       value={input}
                       onChange={e => setInput(e.target.value)}
                       placeholder="Ask a question..."
                       disabled={isLoading}
+                      className="h-9 text-xs"
                     />
-                    <Button type="submit" size="icon" disabled={isLoading}>
-                      {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
+                    <Button type="submit" size="icon" className="h-9 w-9" disabled={isLoading}>
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>
                   </form>
                 </CardFooter>
@@ -108,13 +109,15 @@ export function ChatWidget() {
           )}
         </AnimatePresence>
 
-        <Button
-          onClick={() => setIsOpen(!isOpen)}
-          className="rounded-full h-16 w-16 shadow-lg mt-4"
-          aria-label="Toggle chat widget"
-        >
-          {isOpen ? <X className="h-8 w-8" /> : <MessageSquare className="h-8 w-8" />}
-        </Button>
+        {!isOpen && (
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="rounded-full h-14 w-14 sm:h-16 sm:w-16 shadow-lg mt-4"
+            aria-label="Toggle chat widget"
+          >
+            <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8" />
+          </Button>
+        )}
       </div>
     </>
   );
