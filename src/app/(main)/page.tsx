@@ -40,6 +40,7 @@ const LockIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 import { useProduct } from '@/hooks/use-product';
 import { useRecentlyViewed } from '@/hooks/use-recently-viewed';
+import { useHomepage } from '@/hooks/use-homepage';
 import { CallToAction } from '@/components/call-to-action';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,12 +53,31 @@ import { useToast } from '@/hooks/use-toast';
 export default function HomePage() {
   const { state: productState } = useProduct();
   const { products, loading } = productState;
+  const { state: homepageState } = useHomepage();
   const { items: recentlyViewed } = useRecentlyViewed();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  // Filter promotion slides of type 'image' that have content
+  const imageSlides = useMemo(() => {
+    const images = homepageState?.promotions
+      ?.filter(p => p.type === 'image' && p.content)
+      ?.map(p => p.content) || [];
+    return images.length > 0 ? images : ['/hero-model.png'];
+  }, [homepageState?.promotions]);
+
+  // Automatic slideshow effect
+  useEffect(() => {
+    if (imageSlides.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % imageSlides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [imageSlides]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('default');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
@@ -197,16 +217,43 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Right half: Editorial photo */}
-        <div className="md:col-span-7 relative min-h-[300px] md:min-h-full bg-muted overflow-hidden flex items-center justify-center">
-          <Image 
-            src="/hero-model.png" 
-            alt="Glitch & Slay Model" 
-            fill 
-            sizes="(max-width: 768px) 100vw, 60vw"
-            className="object-cover object-center"
-            priority 
-          />
+        {/* Right half: Editorial photo - Sliding Image Carousel */}
+        <div className="md:col-span-7 relative min-h-[300px] md:min-h-full bg-muted overflow-hidden">
+          {imageSlides.map((src, index) => (
+            <div
+              key={src + index}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                index === currentSlideIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              }`}
+            >
+              <Image 
+                src={src} 
+                alt={`Glitch & Slay Hero ${index + 1}`} 
+                fill 
+                sizes="(max-width: 768px) 100vw, 60vw"
+                className="object-cover object-center transition-transform duration-[5000ms] ease-out"
+                style={{
+                  transform: index === currentSlideIndex ? 'scale(1.05)' : 'scale(1.0)'
+                }}
+                priority={index === 0}
+              />
+            </div>
+          ))}
+          {/* Slider Pagination Controls */}
+          {imageSlides.length > 1 && (
+            <div className="absolute bottom-6 right-6 z-20 flex gap-2">
+              {imageSlides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlideIndex(index)}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                    index === currentSlideIndex ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
