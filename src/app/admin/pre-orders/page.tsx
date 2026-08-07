@@ -267,12 +267,12 @@ export default function AdminPreOrdersPage() {
                       </div>
                     </TableCell>
                     <TableCell>{getDate(preOrder.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>GH₵{preOrder.totalPrice.toFixed(2)}</TableCell>
+                    <TableCell>GH₵{(preOrder.totalPrice ?? 0).toFixed(2)}</TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-semibold text-sm">GH₵{preOrder.amountPaid.toFixed(2)}</div>
-                        {preOrder.balanceRemaining > 0 && (
-                          <div className="text-xs text-amber-600 font-semibold">Bal: GH₵{preOrder.balanceRemaining.toFixed(2)}</div>
+                        <div className="font-semibold text-sm">GH₵{(preOrder.amountPaid ?? 0).toFixed(2)}</div>
+                        {(preOrder.balanceRemaining ?? 0) > 0 && (
+                          <div className="text-xs text-amber-600 font-semibold">Bal: GH₵{(preOrder.balanceRemaining ?? 0).toFixed(2)}</div>
                         )}
                       </div>
                     </TableCell>

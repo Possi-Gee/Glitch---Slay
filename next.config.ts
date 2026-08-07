@@ -41,6 +41,7 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  serverExternalPackages: ['genkit', '@genkit-ai/core', 'handlebars', 'dotprompt'],
 };
 
 export default nextConfig;
